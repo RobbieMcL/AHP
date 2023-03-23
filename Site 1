@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>AHP Calculator</title>
+</head>
+<body>
+	<h1>AHP Calculator</h1>
+	<form>
+		<label for="criteria">Enter the criteria:</label>
+		<input type="text" id="criteria" name="criteria" placeholder="Criteria 1, Criteria 2, Criteria 3...">
+		<br>
+		<label for="pairwise">Enter the pairwise comparisons:</label>
+		<textarea id="pairwise" name="pairwise" placeholder="Enter the pairwise comparison matrix in comma-separated format."></textarea>
+		<br>
+		<button type="button" onclick="calculate()">Calculate</button>
+	</form>
+	<div id="results"></div>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/9.4.4/math.min.js" integrity="sha512-kksFZfvGfwcwhRfhfMdojHhpA1y44kr7atG2f4L4x3K6ZBJCh/CgKjQWFGOnr7zq6yCDU6KgU6ts8uV7iJSZxA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	<script>
+		function calculate() {
+			// Get the criteria and pairwise comparisons from the form
+			const criteriaInput = document.getElementById('criteria').value;
+			const pairwiseInput = document.getElementById('pairwise').value;
+
+			// Parse the criteria into an array
+			const criteria = criteriaInput.split(',').map(str => str.trim());
+
+			// Parse the pairwise comparisons into a matrix
+			const pairwiseRows = pairwiseInput.split('\n').map(str => str.trim());
+			const pairwise = pairwiseRows.map(row => row.split(',').map(str => parseFloat(str)));
+
+			// Validate the input data
+			if (criteria.length < 2) {
+				alert('Please enter at least 2 criteria.');
+				return;
+			}
+
+			if (criteria.length > 20) {
+				alert('Please enter no more than 20 criteria.');
+				return;
+			}
+
+			if (pairwiseRows.length !== criteria.length) {
+				alert('The number of rows in the pairwise comparison matrix must match the number of criteria.');
+				return;
+			}
+
+			for (let i = 0; i < pairwise.length; i++) {
+				if (pairwise[i].length !== criteria.length) {
+					alert('The number of columns in the pairwise comparison matrix must match the number of criteria.');
+					return;
+				}
+
+				for (let j = 0; j < pairwise[i].length; j++) {
+					if (isNaN(pairwise[i][j])) {
+						alert('Please enter a valid number for each element in the pairwise comparison matrix.');
+						return;
+					}
+				}
+			}
+
+			// Normalize the pairwise comparisons matrix
+			const pairwiseNormalized = math.divide(pairwise, math.sum(pairwise, 1));
+
+			// Calculate the criteria weights
+			const criteriaWeights = math.divide(math.sum(pairwiseNormalized, 0), pairwiseNormalized.length);
+
+			// Calculate the consistency ratio
+			const lambdaMax = math.sum(math.dot(pairwiseNormalized, criteriaWeights), 0) / criteriaWeights;
+			const randomIndex = [0, 0, 0.58, 0.90, 1.12, 1.24, 1.32, 1.41, 1.45, 1.49];
+			const consistencyIndex = (lambdaMax -
